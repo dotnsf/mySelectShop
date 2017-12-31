@@ -7,20 +7,51 @@ if( $argc == 1 ){
 }else{
   define( 'OUTPUT_FILENAME', $argv[1] );
 }
+//echo( 'Target filename : ' . OUTPUT_FILENAME . "\n\n" );
 
-if( $argc <= 2 ){
-  //. initialize output file
-  $fno = fopen( OUTPUT_FILENAME, 'w' );
-  if( $fno ){
-    fwrite( $fno, "" );
-    fclose( $fno );
-  }else{
-    echo( "Faild to open " . OUTPUT_FILENAME ."\n" );
-  }
-}
 
 //. USER_AGENT
 define( 'CRAWLER_USER_AGENT', 'XXX (Linux)' );
+
+
+function initData(){
+  if( $argc <= 2 ){
+    //. initialize output file
+    $fno = fopen( OUTPUT_FILENAME, 'w' );
+    if( $fno ){
+      fwrite( $fno, "" );
+      fclose( $fno );
+    }else{
+      echo( "Faild to open " . OUTPUT_FILENAME ."\n" );
+    }
+  }
+}
+
+function initDB(){
+  $request = 'https://' . DB_USER . '.cloudant.com/' . DB_NAME;
+  $opts = array(
+    'http' => array(
+      'method' => 'GET',
+      'header' => array(
+        'Authorization: Basic ' . base64_encode( DB_USER . ':' . DB_PASSWORD )
+      )
+    )
+  );
+  $context = stream_context_create( $opts );
+  $r = file_get_contents( $request, false, $context );
+  if( $r === false ){
+    $opts = array(
+      'http' => array(
+        'method' => 'PUT',
+        'header' => array(
+          'Authorization: Basic ' . base64_encode( DB_USER . ':' . DB_PASSWORD )
+        )
+      )
+    );
+    $context = stream_context_create( $opts );
+    $r = file_get_contents( $request, false, $context );
+  }
+}
 
 
 function trimText( $html, $startArr, $endText ){
@@ -312,7 +343,7 @@ function getItemSearchAmazonAPI($node,$min,$max,$item_page = 0,$aws_host = 'ecs.
 	$request .= ( $params . "&Signature=" . urlencode( base64_encode( $hash ) ) );
 
 	$opts = array(
-		'http'=>array(
+		'https'=>array(
 			'method'=>'GET',
 			'header'=>"User-Agent: ".CRAWLER_USER_AGENT."\r\n" .
 				'Host: ' . $aws_host . "\r\n"
@@ -388,6 +419,77 @@ function getItemSearchAmazonAPI($node,$min,$max,$item_page = 0,$aws_host = 'ecs.
 	}
 
 	return $totalpages;
+}
+
+
+function loadBulk(){
+  $fno = fopen( OUTPUT_FILENAME, 'r' );
+  if( $fno ){
+    $txt = "";
+    while( ( $line = fgets( $fno ) ) !== false ){
+      $txt .= ( $line . "\n" );
+    }
+    fclose( $fno );
+    $lines = explode( "\n", $txt );
+
+    $cnt = 0;
+    $body = "";
+    for( $i = 0; $i < count( $lines ); $i ++ ){
+      $line = trim($lines[$i]);
+      if( $line || $i == count( $lines ) - 1 ){
+        if( $line ){
+          if( mb_strlen( $body ) > 0 ){
+            $body .= ",";
+          }
+          $body .= ( $line );
+          $cnt ++;
+        }
+
+        if( $cnt == 1000 || $i == count( $lines ) - 1 ){
+          $body = '{ "docs": [ ' . $body . ' ] }';
+       	  $request = 'https://' . DB_USER . '.cloudant.com/' . DB_NAME . '/_bulk_docs';
+          $opts = array(
+		'http' => array(
+			'method' => 'POST',
+			'header' => array(
+				'Content-type: application/json',
+				'Content-Length: ' . strlen( $body ),
+				'Authorization: Basic ' . base64_encode( DB_USER . ':' . DB_PASSWORD )
+			),
+			'content' => $body
+		)
+          );
+          $context = stream_context_create( $opts );
+	  usleep( 1000000 );
+          $r = file_get_contents( $request, false, $context );
+//echo( "r = $r\n" );
+
+          $body = "";
+          $cnt = 0;
+        }
+      }
+    }
+  }else{
+    echo( "Faild to open " . OUTPUT_FILENAME ."\n" );
+  }
+
+  //. search index
+  $body = '{ "_id": "_design/ftsearch", "indexes": { "itemsIndex": { "analyzer": "japanese", "index": "function(doc){ if(\'name\' in doc){ var fields = [doc.name, doc.code, doc.brand, doc.maker, doc.image_url, doc.asin]; index(\'default\', fields.join(\' \')); index(\'name\', doc.name, {store:\'yes\'}); index(\'code\', doc.code, {store:\'yes\'}); index(\'brand\', doc.brand, {store:\'yes\'}); index(\'maker\', doc.maker, {store:\'yes\'}); index(\'image_url\', doc.image_url, {store:\'yes\'}); index(\'asin\', doc.asin, {store:\'yes\'}); } }" } } }';
+  $request = 'https://' . DB_USER . '.cloudant.com/' . DB_NAME . '/_design/ftsearch';
+  $opts = array(
+    'http' => array(
+      'method' => 'PUT',
+      'header' => array(
+        'Content-type: application/json',
+        'Content-Length: ' . strlen( $body ),
+        'Authorization: Basic ' . base64_encode( DB_USER . ':' . DB_PASSWORD )
+      ),
+      'content' => $body
+    )
+  );
+  $context = stream_context_create( $opts );
+  usleep( 2000000 );
+  $r = file_get_contents( $request, false, $context );
 }
 
 ?>

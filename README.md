@@ -71,7 +71,7 @@ Sample Web Shop with Amazon Affiliate
 
 - Load sample items record again:
 
-`$ php -f bulkload.php [items.txt] [u]`
+`$ php bulkload.php [items.txt] [u]`
 
     - You can specify input file name.
 
@@ -134,7 +134,7 @@ If you don't want to use sample data, you can follow these instructions:
 
 - Run following command:
 
-`$ php -f crawl.php [items.txt]`
+`$ php crawl.php [items.txt]`
 
     - You can specify output file name.
 
@@ -142,7 +142,7 @@ If you don't want to use sample data, you can follow these instructions:
 
 - Load new sample file.
 
-`$ php -f bulkload.php [items.txt]`
+`$ php bulkload.php [items.txt]`
 
     - You can specify input file name.
 
