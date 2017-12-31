@@ -1,11 +1,23 @@
 <?php
-
-//. Amazon Associate API
-define( 'AWS_KEY', '(AWS_KEY)' );
-define( 'AWS_SECRET', '(AWS_SECRET)' );
+require_once( './credentials.php' );
 
 //. Result filename
-define( 'OUTPUT_FILENAME', 'items.txt' );
+if( $argc == 1 ){
+  define( 'OUTPUT_FILENAME', 'items.txt' );
+}else{
+  define( 'OUTPUT_FILENAME', $argv[1] );
+}
+
+if( $argc <= 2 ){
+  //. initialize output file
+  $fno = fopen( OUTPUT_FILENAME, 'w' );
+  if( $fno ){
+    fwrite( $fno, "" );
+    fclose( $fno );
+  }else{
+    echo( "Faild to open " . OUTPUT_FILENAME ."\n" );
+  }
+}
 
 //. USER_AGENT
 define( 'CRAWLER_USER_AGENT', 'XXX (Linux)' );
@@ -96,12 +108,12 @@ function addLine( $line ){
 
 
 function update_item_master_text( $itemcode, $itemname, $itemimageurl, $makername, $brandname, $listprice, $asin ){
-	if( $asin ){
-	  //$line = $itemcode . "\t" . $itemname . "\t" . $itemimageurl . "\t" . $makername . "\t" . $brandname . "\t" . $listprice . "\t" . $asin;
-		$line = '{"asin":"' . $asin . '"';
-		if( $itemcode ){
-			$line .= ( ', "code":"' . $itemcode . '"' );
-		}
+  if( $asin ){
+    //$line = $itemcode . "\t" . $itemname . "\t" . $itemimageurl . "\t" . $makername . "\t" . $brandname . "\t" . $listprice . "\t" . $asin;
+    $line = '{"asin":"' . $asin . '"';
+    if( $itemcode ){
+      $line .= ( ', "code":"' . $itemcode . '"' );
+    }
 		if( $itemname ){
 			$line .= ( ', "name":"' . $itemname . '"' );
 		}
@@ -363,7 +375,7 @@ function getItemSearchAmazonAPI($node,$min,$max,$item_page = 0,$aws_host = 'ecs.
 				$listprice = 0;
 			}
 
-			//. TSV
+			//. output
 			update_item_master_text( $ean, $title, $image_url, $manufacturer, $brand, $listprice, $asin );
 			//update_mysampledata_sql( $ean, $title, $image_url, $manufacturer, $brand, $listprice, $asin );
 

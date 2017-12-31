@@ -2,6 +2,8 @@
 
 //. Amazon Associate TAG
 define( 'AWS_ASSOC_TAG', '' );
+define( 'AWS_KEY', '' );
+define( 'AWS_SECRET', '' );
 
 //. Cloudant
 define( 'DB_USER', 'username' );
