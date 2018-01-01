@@ -7,14 +7,14 @@ define( 'AWS_SECRET', '' );
 
 //. Cloudant
 define( 'DB_NAME', 'items' );
-$def_db_user = 'cloudant_username';
-$def_db_password = 'cloudant_password';
+$def_db_user = '';
+$def_db_password = '';
 
 
 //. For IBM Cloud
 $db_user = null;
 $db_password = null;
-if( getenv( 'VCAP_SERVICES' ) ){
+if( getenv( 'VCAP_SERVICES' ) && !$def_db_user && !$def_db_password ){
   $vcap = json_decode( getenv( 'VCAP_SERVICES' ), true );
   
   $credentials = NULL;
