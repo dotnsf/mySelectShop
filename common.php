@@ -288,7 +288,7 @@ function getCodesFromAmazonAPI( $node ){
 
 function getCodesAmazonNodeMinMax( $node, $min, $max ){
 	//. Page 1
-	usleep( 1300000 );
+	usleep( 1400000 );
   echo( "node = $node : min = $min , max = $max , page = 1 \n" );
 	$totalpages = getItemSearchAmazonAPI($node,$min,$max);
 
@@ -297,7 +297,7 @@ function getCodesAmazonNodeMinMax( $node, $min, $max ){
 			//. Page 2+
 			$m = ( $totalpages > 10 ) ? 10 : $totalpages;
 			for( $p = 2; $p <= $m ; $p ++ ){
-				usleep( 1300000 );
+				usleep( 1400000 );
         echo( "node = $node :  min = $min , max = $max , page = $p / $totalpages \n" );
 				getItemSearchAmazonAPI($node,$min,$max,$p);
 			}
@@ -488,7 +488,7 @@ function loadBulk(){
     )
   );
   $context = stream_context_create( $opts );
-  usleep( 2000000 );
+  usleep( 1000000 );
   $r = file_get_contents( $request, false, $context );
 }
 
